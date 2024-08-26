@@ -1,66 +1,58 @@
-import { readFile, writeFileSync } from 'fs';
 
-let users;
+import bcrypt from 'bcrypt'
+import userModel from '../../../database/models/user.model.js'
+import sendOurEmail from '../../utli/sendEmail.js'
 
-readFile('test.json', (err, data) => {
-    if (err) {
-        console.error(err);
-        return;
-    }
-    users = JSON.parse(data);
-    console.log(users);
-})
 
-const getAllUsers = (req, res) => {
-    res.json(users);
+
+const getAllUsers = async (req, res) => {
+    let user = await userModel.find()
+    res.json({ message: "success", user })
 }
 
-const sortUsers = (req, res) => {
-    const usersSorted = users.sort((a, b) => a.name.localeCompare(b.name));
-    res.json(usersSorted);
-    writeFileSync("demo.txt", "Sorted users : " + JSON.stringify(usersSorted) + "\n", { flag: 'a' });
+
+const signUp = async (req, res) => {
+
+    let user = await userModel.insertMany(req.body)
+
+    res.json({ message: "signup process successfully", user })
+    sendOurEmail(req.body.email)
+    // let user = new userModel(req.body) anthor way to add using just one
+    // user.save()
+}
+const signIn = async (req, res) => {
+    let foundedUser = await userModel.findOne({ email: req.body.email })
+    if (!foundedUser || !bcrypt.compareSync(req.body.password, foundedUser.password))
+        return res.status(404).json({ message: "email or password is not valid" })
+    if (foundedUser.isConfrimed == false)
+        return res.status(401).json({ message: "you did not activate your account" })
+    res.status(200).json({ message: "sign in process successfully", foundedUser })
 }
 
-const addUser = (req, res) => {
-    req.body.id = users[users.length - 1].id + 1;
-    users.push(req.body)
-    res.send({ message: "Success" })
-    writeFileSync("demo.txt", "Added user : " + JSON.stringify(req.body) + "\n", { flag: 'a' });
+const updateUsers = async (req, res) => {
+    let user = await userModel.findByIdAndUpdate(req.params.id, { name: req.body.name }, { new: true })
+    res.json({ message: "updated", user })
 }
 
-const updateUsers = (req, res) => {
-    let user = users.find(element => element.id == req.body.id)
-    if (user) {
-        user.name = req.body.name
-        res.send({ message: "Success" })
-    } else {
-        res.send({ message: "User not found" })
-    }
-    writeFileSync("demo.txt", "update user : " + JSON.stringify(req.body) + "\n", { flag: 'a' });
+const deleteUsers = async (req, res) => {
+    let user = await userModel.findByIdAndDelete(req.params.id, { new: true })
+    res.json({ messages: "deleted", user })
 }
-
-const deleteUsers = (req, res) => {
-    users = users.filter(element => element.id != req.params.id);
-    writeFileSync("demo.txt", "Deleted user : " + JSON.stringify(users) + "\n", { flag: 'a' });
-    res.send({ message: "Success" })
+const sortUsers = async (req, res) => {
+    let user = await userModel.find().sort({ name: 1 })
+    res.json({ messages: "sorted", user })
 }
-
-const searchUsers = (req, res) => {
-    let user = users.find(element => element.id == req.params.id)
-    if (user) {
-        user.id = req.params.id
-        res.send({ message: "Success", user })
-    } else {
-        res.send({ message: "User not found" })
-    }
-    writeFileSync("demo.txt", "Searched user : " + JSON.stringify(user) + "\n", { flag: 'a' })
+const verfiyAccount = async (req, res) => {
+    let user = await userModel.findOneAndUpdate({ email: req.params.email }, { isConfrimed: true }, { new: true })
+    res.json({ messages: "welcome" })
 }
 
 export {
-    searchUsers,
+    signUp,
+    getAllUsers,
+    signIn,
     updateUsers,
     deleteUsers,
-    getAllUsers,
     sortUsers,
-    addUser
+    verfiyAccount
 }

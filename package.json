@@ -1,5 +1,11 @@
 {
-  "name": "mohamed-hassan-ahmed",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1",
+    "nodemailer": "^6.9.14"
+  },
+  "name": "lab",
   "version": "1.0.0",
   "main": "app.js",
   "type": "module",
@@ -9,8 +15,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "express": "^4.19.2"
-  }
+  "description": ""
 }
